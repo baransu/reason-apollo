@@ -19,6 +19,12 @@ external createHttpLink: ApolloClient.linkOptions('fetch) => apolloLink =
 external apolloLinkSetContext: (unit => Js.t({..})) => apolloLink =
   "setContext";
 
+/* Bind the async setContext method */
+[@bs.module "apollo-link-context"]
+external apolloLinkAsyncSetContext:
+  ('request => Js.Promise.t(Js.t({..}))) => apolloLink =
+  "setContext";
+
 /* Bind the onError method */
 [@bs.module "apollo-link-error"]
 external apolloLinkOnError: (errorResponse => unit) => apolloLink = "onError";
