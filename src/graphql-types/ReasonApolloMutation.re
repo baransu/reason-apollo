@@ -19,9 +19,9 @@ module Make = (Config: Config) => {
       "loading": bool,
     } =
     "%identity";
-
-  [@bs.module] external gql: ReasonApolloTypes.gql = "graphql-tag";
-
+  [@bs.module "graphql-tag"] external gql: ReasonApolloTypes.gql = "default";
+  [@bs.module "react-apollo"]
+  external mutationComponent: ReasonReact.reactClass = "Mutation";
   let graphqlMutationAST = gql(. Config.query);
   type response = mutationResponse(Config.t);
   type renderPropObj = {
@@ -40,15 +40,15 @@ module Make = (Config: Config) => {
     ) =>
     Js.Promise.t(executionResponse(Config.t));
 
-  [@bs.deriving abstract]
-  type jsMutationParams = {
-    [@bs.optional]
-    variables: Js.Json.t,
-    [@bs.optional]
-    refetchQueries: array(string),
-    [@bs.optional]
-    optimisticResponse: Config.t,
-  };
+  [@bs.obj]
+  external makeMutateParams:
+    (
+      ~variables: Js.Json.t=?,
+      ~refetchQueries: array(string)=?,
+      ~optimisticResponse: Config.t=?
+    ) =>
+    _ =
+    "";
 
   let convertExecutionResultToReason = (executionResult: executionResult) =>
     switch (
@@ -59,7 +59,6 @@ module Make = (Config: Config) => {
     | (_, Some(errors)) => Errors(errors)
     | (None, None) => EmptyResponse
     };
-
   let apolloMutationFactory =
       (
         ~jsMutation,
@@ -69,17 +68,11 @@ module Make = (Config: Config) => {
         (),
       ) =>
     jsMutation(
-      jsMutationParams(
-        ~variables?,
-        ~refetchQueries?,
-        ~optimisticResponse?,
-        (),
-      ),
+      makeMutateParams(~variables?, ~refetchQueries?, ~optimisticResponse?),
     )
     |> Js.Promise.(
          then_(response => resolve(convertExecutionResultToReason(response)))
        );
-
   let apolloDataToReason: renderPropObjJS => response =
     apolloData =>
       switch (
@@ -92,7 +85,6 @@ module Make = (Config: Config) => {
       | (false, _, Some(error)) => Error(error)
       | (false, None, None) => NotCalled
       };
-
   let convertJsInputToReason = (apolloData: renderPropObjJS) => {
     result: apolloDataToReason(apolloData),
     data:
@@ -109,37 +101,40 @@ module Make = (Config: Config) => {
     networkStatus: apolloData##networkStatus->Js.Nullable.toOption,
   };
 
-  module JsMutation = {
-    [@bs.module "react-apollo"] [@react.component]
-    external make:
-      (
-        ~mutation: ReasonApolloTypes.queryString,
-        ~variables: option(Js.Json.t)=?,
-        ~onCompleted: option(unit => unit)=?,
-        ~onError: option(unit => unit)=?,
-        ~children: (
-                     jsMutationParams => Js.Promise.t(executionResult),
-                     renderPropObjJS
-                   ) =>
-                   React.element
-      ) =>
-      React.element =
-      "Mutation";
-  };
+  let convertExecutionResultToReason = (executionResult: executionResult) =>
+    switch (
+      executionResult##data |> ReasonApolloUtils.getNonEmptyObj,
+      executionResult##errors |> Js.Nullable.toOption,
+    ) {
+    | (Some(data), _) => Data(Config.parse(data))
+    | (_, Some(errors)) => Errors(errors)
+    | (None, None) => EmptyResponse
+    };
 
-  [@react.component]
+  type updateProps = {. "data": option(Config.t)};
+
   let make =
       (
+        ~update: option(('a, updateProps) => unit)=?,
         ~variables: option(Js.Json.t)=?,
         ~onError: option(unit => unit)=?,
         ~onCompleted: option(unit => unit)=?,
-        ~children: (apolloMutation, renderPropObj) => React.element,
+        children: (apolloMutation, renderPropObj) => ReasonReact.reactElement,
       ) =>
-    <JsMutation mutation=graphqlMutationAST variables onError onCompleted>
-      {(mutation, apolloData) =>
-         children(
-           apolloMutationFactory(~jsMutation=mutation),
-           apolloData |> convertJsInputToReason,
-         )}
-    </JsMutation>;
+    ReasonReact.wrapJsForReason(
+      ~reactClass=mutationComponent,
+      ~props=
+        Js.Nullable.{
+          "update": update |> fromOption,
+          "mutation": graphqlMutationAST,
+          "variables": variables |> fromOption,
+          "onError": onError |> fromOption,
+          "onCompleted": onCompleted |> fromOption,
+        },
+      (mutation, apolloData) =>
+      children(
+        apolloMutationFactory(~jsMutation=mutation),
+        convertJsInputToReason(apolloData),
+      )
+    );
 };
