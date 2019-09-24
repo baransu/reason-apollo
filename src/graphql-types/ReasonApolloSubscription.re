@@ -1,7 +1,7 @@
 open ReasonApolloTypes;
 
 module Make = (Config: ReasonApolloTypes.Config) => {
-  [@bs.module] external gql: ReasonApolloTypes.gql = "graphql-tag";
+  [@bs.module "graphql-tag"] external gql: ReasonApolloTypes.gql = "default";
 
   let graphQLSubscriptionAST = gql(. Config.query);
 
@@ -25,7 +25,7 @@ module Make = (Config: ReasonApolloTypes.Config) => {
     apolloData =>
       switch (
         apolloData##loading,
-        apolloData##data |> Js.Nullable.toOption,
+        apolloData##data |> ReasonApolloUtils.getNonEmptyObj,
         apolloData##error |> Js.Nullable.toOption,
       ) {
       | (true, _, _) => Loading

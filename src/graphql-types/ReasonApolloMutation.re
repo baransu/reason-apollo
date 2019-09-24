@@ -20,7 +20,7 @@ module Make = (Config: Config) => {
     } =
     "%identity";
 
-  [@bs.module] external gql: ReasonApolloTypes.gql = "graphql-tag";
+  [@bs.module "graphql-tag"] external gql: ReasonApolloTypes.gql = "default";
 
   let graphqlMutationAST = gql(. Config.query);
   type response = mutationResponse(Config.t);
@@ -119,7 +119,7 @@ module Make = (Config: Config) => {
         ~mutation: ReasonApolloTypes.queryString,
         ~variables: option(Js.Json.t)=?,
         ~onCompleted: option(unit => unit)=?,
-        ~onError: option(unit => unit)=?,
+        ~onError: option(apolloError => unit)=?,
         ~children: (
                      jsMutationParams => Js.Promise.t(executionResult),
                      renderPropObjJS
@@ -135,7 +135,7 @@ module Make = (Config: Config) => {
       (
         ~update: option(('a, updateProps) => unit)=?,
         ~variables: option(Js.Json.t)=?,
-        ~onError: option(unit => unit)=?,
+        ~onError: option(apolloError => unit)=?,
         ~onCompleted: option(unit => unit)=?,
         ~children: (apolloMutation, renderPropObj) => React.element,
       ) =>

@@ -39,9 +39,12 @@ external createUploadLink:
   ApolloClient.uploadLinkOptions('fetch) => apolloLink =
   "createUploadLink";
 
-let webSocketLink = (~uri, ~reconnect=?, ()) => {
+let webSocketLink = (~uri, ~reconnect=?, ~connectionParams=?, ()) => {
   webSocketLink(
-    webSocketLinkT(~uri, ~options=webSocketLinkOptionsT(~reconnect?, ())),
+    webSocketLinkT(
+      ~uri,
+      ~options=webSocketLinkOptionsT(~reconnect?, ~connectionParams?, ()),
+    ),
   );
 };
 
