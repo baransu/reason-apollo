@@ -4,6 +4,7 @@ type queryObj = {
   .
   "query": ReasonApolloTypes.queryString,
   "variables": Js.Json.t,
+  "fetchPolicy": Js.Nullable.t(string),
 };
 
 type mutationObj = {
