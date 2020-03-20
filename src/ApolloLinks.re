@@ -39,14 +39,13 @@ external createUploadLink:
   ApolloClient.uploadLinkOptions('fetch) => apolloLink =
   "createUploadLink";
 
-let webSocketLink = (~uri, ~reconnect=?, ~connectionParams=?, ()) => {
-  webSocketLink(
-    webSocketLinkT(
-      ~uri,
-      ~options=webSocketLinkOptionsT(~reconnect?, ~connectionParams?, ()),
-    ),
-  );
-};
+// let webSocketLink = (~uri, ~reconnect=?, ~connectionParams=?, ()) => {
+//   uri,
+//   options: {
+//     reconnect,
+//     connectionParams,
+//   },
+// };
 
 /**
  * CreateHttpLink
@@ -63,12 +62,12 @@ let createHttpLink =
       (),
     ) => {
   createHttpLink({
-    "uri": uri,
-    "includeExtensions": Js.Nullable.fromOption(includeExtensions),
-    "fetch": Js.Nullable.fromOption(fetch),
-    "headers": Js.Nullable.fromOption(headers),
-    "credentials": Js.Nullable.fromOption(credentials),
-    "fetchOptions": Js.Nullable.fromOption(fetchOptions),
+    uri,
+    includeExtensions: Js.Nullable.fromOption(includeExtensions),
+    fetch: Js.Nullable.fromOption(fetch),
+    headers: Js.Nullable.fromOption(headers),
+    credentials: Js.Nullable.fromOption(credentials),
+    fetchOptions: Js.Nullable.fromOption(fetchOptions),
   });
 };
 
@@ -88,12 +87,12 @@ let createUploadLink =
     ) =>
   createUploadLink(
     Js.Nullable.{
-      "uri": fromOption(uri),
-      "fetch": fromOption(fetch),
-      "fetchOptions": fromOption(fetchOptions),
-      "credentials": fromOption(credentials),
-      "headers": fromOption(headers),
-      "includeExtensions": fromOption(includeExtensions),
+      uri: fromOption(uri),
+      fetch: fromOption(fetch),
+      fetchOptions: fromOption(fetchOptions),
+      credentials: fromOption(credentials),
+      headers: fromOption(headers),
+      includeExtensions: fromOption(includeExtensions),
     },
   );
 
