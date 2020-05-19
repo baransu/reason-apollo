@@ -20,7 +20,10 @@ type apolloLink;
  */
 type apolloCache;
 
-type networkError = {statusCode: int};
+type networkError = {
+  statusCode: int,
+  respons: Fetch.response,
+};
 
 type apolloErrorExtensions = {code: Js.Nullable.t(string)};
 
